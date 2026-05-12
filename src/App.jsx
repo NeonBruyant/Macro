@@ -602,7 +602,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* CARDS — swipe horizontal to change category */}
+        {/* CARDS — sliding panels per category */}
         <div
           onTouchStart={e=>{navSwipeX.current=e.touches[0].clientX; navSwipeY.current=e.touches[0].clientY;}}
           onTouchEnd={e=>{
@@ -615,25 +615,36 @@ export default function App() {
             }
             navSwipeX.current=null; navSwipeY.current=null;
           }}
-          style={{maxWidth:480,margin:"0 auto",padding:"12px 6px 100px",display:"flex",flexDirection:"column",gap:6}}>
+          style={{maxWidth:480,margin:"0 auto",overflow:"hidden"}}>
 
-          {/* section header */}
-          <div style={{padding:"8px 4px 4px"}}>
-            <div style={{fontFamily:C.font,fontSize:11,color:"rgba(255,255,255,0.3)",letterSpacing:1,textTransform:"uppercase"}}>{filtered.length+" recette"+(filtered.length>1?"s":"")}</div>
-          </div>
-
-          {filtered.map((r,i)=><RecipeCard key={r.id} r={r} onClick={setSelected} i={i}/>)}
-
-          {/* generate card */}
-          <div onClick={()=>setModal(true)}
-            style={{background:"rgba(255,255,255,0.06)",borderRadius:48,padding:"28px 20px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",border:"1px solid rgba(255,255,255,0.08)",transition:"background 0.2s",WebkitTapHighlightColor:"transparent"}}
-            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}
-            onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.06)"}>
-            <div style={{fontFamily:C.font,fontSize:11,color:"rgba(255,255,255,0.3)",letterSpacing:2,textTransform:"uppercase"}}>Nouvelle recette</div>
-            <div style={{background:C.white,borderRadius:50,padding:"10px 20px",display:"inline-flex",alignItems:"center",gap:6}}>
-              <span style={{fontFamily:C.font,fontSize:12,fontWeight:600,color:C.dark}}>Via Claude AI</span>
-              <span style={{color:"rgba(0,0,0,0.3)",fontSize:11}}>→</span>
-            </div>
+          {/* sliding wrapper — one panel per category */}
+          <div style={{
+            display:"flex",
+            width:(PROTEIN_NAV.length*100)+"%",
+            transform:"translateX(calc(-"+(navIdx*(100/PROTEIN_NAV.length))+"%))",
+            transition:"transform 0.32s cubic-bezier(.4,0,.2,1)",
+          }}>
+            {PROTEIN_NAV.map((n,pi)=>{
+              const panelRecipes=recipes.filter(r=>matchNav(r,n.id));
+              return (
+                <div key={n.id} style={{width:(100/PROTEIN_NAV.length)+"%",flexShrink:0,padding:"12px 6px 100px",display:"flex",flexDirection:"column",gap:6}}>
+                  <div style={{padding:"8px 4px 4px"}}>
+                    <div style={{fontFamily:C.font,fontSize:11,color:"rgba(255,255,255,0.3)",letterSpacing:1,textTransform:"uppercase"}}>{panelRecipes.length+" recette"+(panelRecipes.length>1?"s":"")}</div>
+                  </div>
+                  {panelRecipes.map((r,i)=><RecipeCard key={r.id} r={r} onClick={setSelected} i={i}/>)}
+                  <div onClick={()=>setModal(true)}
+                    style={{background:"rgba(255,255,255,0.06)",borderRadius:48,padding:"28px 20px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",border:"1px solid rgba(255,255,255,0.08)",WebkitTapHighlightColor:"transparent"}}
+                    onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+                    onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.06)"}>
+                    <div style={{fontFamily:C.font,fontSize:11,color:"rgba(255,255,255,0.3)",letterSpacing:2,textTransform:"uppercase"}}>Nouvelle recette</div>
+                    <div style={{background:C.white,borderRadius:50,padding:"10px 20px",display:"inline-flex",alignItems:"center",gap:6}}>
+                      <span style={{fontFamily:C.font,fontSize:12,fontWeight:600,color:C.dark}}>Via Claude AI</span>
+                      <span style={{color:"rgba(0,0,0,0.3)",fontSize:11}}>→</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -651,11 +662,14 @@ export default function App() {
           <div style={{
             position:"absolute",
             top:8,
-            left:"calc("+navIdx+" * 20% + 8px)",
-            width:"calc(20% - 16px)",
+            left:"calc("+navIdx+" * 20% + 6px)",
+            width:"calc(20% - 12px)",
             height:"calc(100% - 24px)",
             background:"rgba(255,255,255,0.1)",
+            backdropFilter:"blur(8px)",
+            WebkitBackdropFilter:"blur(8px)",
             borderRadius:16,
+            border:"1px solid rgba(255,255,255,0.08)",
             transition:"left 0.28s cubic-bezier(.4,0,.2,1)",
             pointerEvents:"none",
           }}/>
