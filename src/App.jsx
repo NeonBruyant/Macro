@@ -400,50 +400,84 @@ function Sheet({ recipe, onClose }) {
 
           {/* TABS CARD */}
           <div style={{background:C.white,borderRadius:48,overflow:"hidden"}}>
-            {/* tab bar */}
-            <div style={{display:"flex",padding:"6px 6px 0",gap:3}}>
-              {TABS.map(t=>(
-                <button key={t.id} onClick={()=>setTab(t.id)}
-                  style={{flex:1,padding:"9px 6px",borderRadius:"16px 16px 0 0",border:"none",fontFamily:C.font,fontSize:11,fontWeight:600,color:tab===t.id?C.text:C.muted,background:tab===t.id?C.card:"transparent",cursor:"pointer",transition:"all 0.15s",letterSpacing:0.3}}>
-                  {t.label}
-                </button>
-              ))}
+            {/* tab bar — sliding indicator */}
+            <div style={{padding:"6px 6px 0"}}>
+              <div style={{position:"relative",display:"flex",background:"rgba(0,0,0,0.06)",borderRadius:20,padding:2}}>
+                {/* sliding background */}
+                <div style={{
+                  position:"absolute",top:2,left:2,height:"calc(100% - 4px)",
+                  width:"calc("+(100/TABS.length)+"% - 6px/"+TABS.length+")",
+                  background:C.white,borderRadius:16,
+                  transform:"translateX(calc("+tabIdx+" * 100% + "+tabIdx+" * 2px))",
+                  transition:"transform 0.28s cubic-bezier(.4,0,.2,1)",
+                  pointerEvents:"none",
+                  boxShadow:"0 1px 4px rgba(0,0,0,0.1)",
+                }}/>
+                {TABS.map((t,i)=>(
+                  <button key={t.id} onClick={()=>setTab(t.id)}
+                    style={{position:"relative",zIndex:1,flex:1,padding:"9px 6px",borderRadius:16,border:"none",fontFamily:C.font,fontSize:11,fontWeight:600,color:tab===t.id?C.text:C.muted,background:"transparent",cursor:"pointer",transition:"color 0.2s",letterSpacing:0.3}}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div
-              onTouchStart={onTabTS} onTouchEnd={onTabTE}
-              style={{background:C.card,margin:"0 6px 6px",borderRadius:20,padding:"4px 0"}}>
-              {tab==="ingredients"&&recipe.ingredients.map((ing,i)=>(
-                <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:i<recipe.ingredients.length-1?"1px solid "+C.white:"none"}}>
-                  <span style={{fontFamily:C.font,fontSize:14,color:C.text}}>{ing.name}</span>
-                  <span style={{fontFamily:C.mono,fontSize:12,fontWeight:500,color:C.text}}>{fmt(ing,ratio)}</span>
-                </div>
-              ))}
+            {/* sliding content wrapper */}
+            <div onTouchStart={onTabTS} onTouchEnd={onTabTE}
+              style={{overflow:"hidden",margin:"0 6px 6px"}}>
+              <div style={{
+                display:"flex",
+                width:(TABS.length*100)+"%",
+                transform:"translateX(calc(-"+(tabIdx*(100/TABS.length))+"%))",
+                transition:"transform 0.3s cubic-bezier(.4,0,.2,1)",
+              }}>
 
-              {tab==="steps"&&recipe.steps&&recipe.steps.map((step,i)=>(
-                <div key={i} style={{display:"flex",gap:14,padding:"14px 16px",borderBottom:i<recipe.steps.length-1?"1px solid "+C.white:"none",alignItems:"flex-start"}}>
-                  <div style={{fontFamily:C.mono,fontSize:12,color:C.muted,flexShrink:0,marginTop:1,width:22}}>{i<9?"0"+(i+1):i+1}</div>
-                  <div>
-                    <div style={{fontFamily:C.font,fontSize:10,fontWeight:700,color:C.text,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>{step.title}</div>
-                    <div style={{fontFamily:C.font,fontSize:13,color:C.mid,lineHeight:1.6}}>{step.content}</div>
+                {/* PANEL: Ingrédients */}
+                <div style={{width:(100/TABS.length)+"%",flexShrink:0}}>
+                  <div style={{background:C.card,borderRadius:20,padding:"4px 0"}}>
+                    {recipe.ingredients.map((ing,i)=>(
+                      <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:i<recipe.ingredients.length-1?"1px solid "+C.white:"none"}}>
+                        <span style={{fontFamily:C.font,fontSize:14,color:C.text}}>{ing.name}</span>
+                        <span style={{fontFamily:C.mono,fontSize:12,fontWeight:500,color:C.text}}>{fmt(ing,ratio)}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
 
-              {tab==="shopping"&&(
-                <div>
-                  {recipe.ingredients.map((ing,i)=>(
-                    <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:i<recipe.ingredients.length-1?"1px solid "+C.white:"none"}}>
-                      <span style={{fontFamily:C.font,fontSize:14,color:C.text}}>{ing.name}</span>
-                      <span style={{fontFamily:C.mono,fontSize:12,fontWeight:500,color:C.text}}>{fmt(ing,ratio)}</span>
+                {/* PANEL: Préparation (full recipes only) */}
+                {recipe.type==="full"&&(
+                  <div style={{width:(100/TABS.length)+"%",flexShrink:0}}>
+                    <div style={{background:C.card,borderRadius:20,padding:"4px 0"}}>
+                      {recipe.steps&&recipe.steps.map((step,i)=>(
+                        <div key={i} style={{display:"flex",gap:14,padding:"14px 16px",borderBottom:i<recipe.steps.length-1?"1px solid "+C.white:"none",alignItems:"flex-start"}}>
+                          <div style={{fontFamily:C.mono,fontSize:12,color:C.muted,flexShrink:0,marginTop:1,width:22}}>{i<9?"0"+(i+1):i+1}</div>
+                          <div>
+                            <div style={{fontFamily:C.font,fontSize:10,fontWeight:700,color:C.text,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>{step.title}</div>
+                            <div style={{fontFamily:C.font,fontSize:13,color:C.mid,lineHeight:1.6}}>{step.content}</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",background:C.dark,borderRadius:"0 0 20px 20px",marginTop:0}}>
-                    <span style={{fontFamily:C.font,fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)",letterSpacing:1,textTransform:"uppercase"}}>Total estimé</span>
-                    <span style={{fontFamily:C.mono,fontSize:18,color:"#fff",fontWeight:500}}>{"~"+(recipe.costPerServing*servings).toFixed(2)+" €"}</span>
+                  </div>
+                )}
+
+                {/* PANEL: Courses */}
+                <div style={{width:(100/TABS.length)+"%",flexShrink:0}}>
+                  <div style={{background:C.card,borderRadius:20,overflow:"hidden"}}>
+                    {recipe.ingredients.map((ing,i)=>(
+                      <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:i<recipe.ingredients.length-1?"1px solid "+C.white:"none"}}>
+                        <span style={{fontFamily:C.font,fontSize:14,color:C.text}}>{ing.name}</span>
+                        <span style={{fontFamily:C.mono,fontSize:12,fontWeight:500,color:C.text}}>{fmt(ing,ratio)}</span>
+                      </div>
+                    ))}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",background:C.dark}}>
+                      <span style={{fontFamily:C.font,fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)",letterSpacing:1,textTransform:"uppercase"}}>Total estimé</span>
+                      <span style={{fontFamily:C.mono,fontSize:18,color:"#fff",fontWeight:500}}>{"~"+(recipe.costPerServing*servings).toFixed(2)+" €"}</span>
+                    </div>
                   </div>
                 </div>
-              )}
+
+              </div>
             </div>
           </div>
 
@@ -558,23 +592,13 @@ export default function App() {
       <div style={{minHeight:"100vh",background:C.bg,opacity:splash?0:1,transition:"opacity 0.4s 0.1s"}}>
 
         {/* TOP BAR */}
-        <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(28,28,30,0.95)",backdropFilter:"blur(20px)",padding:"0 16px"}}>
+        <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(28,28,30,0.92)",backdropFilter:"blur(20px)",padding:"0 16px"}}>
           <div style={{maxWidth:480,margin:"0 auto",height:52,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div style={{fontFamily:C.font,fontSize:15,fontWeight:700,color:"#fff",letterSpacing:3,textTransform:"uppercase"}}>KoraMarco</div>
             <button onClick={()=>setModal(true)}
               style={{background:C.white,color:C.dark,border:"none",borderRadius:50,padding:"7px 16px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:C.font,letterSpacing:1,textTransform:"uppercase"}}>
               + Générer
             </button>
-          </div>
-
-          {/* NAV PILLS */}
-          <div style={{maxWidth:480,margin:"0 auto",display:"flex",gap:5,paddingBottom:10,overflowX:"auto"}}>
-            {PROTEIN_NAV.map(n=>(
-              <button key={n.id} onClick={()=>setNav(n.id)}
-                style={{padding:"6px 14px",borderRadius:50,border:"none",whiteSpace:"nowrap",background:nav===n.id?C.white:"rgba(255,255,255,0.1)",color:nav===n.id?C.dark:"rgba(255,255,255,0.5)",fontSize:11,fontWeight:nav===n.id?700:400,cursor:"pointer",fontFamily:C.font,letterSpacing:0.3,transition:"all 0.18s",flexShrink:0}}>
-                {n.label}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -591,7 +615,7 @@ export default function App() {
             }
             navSwipeX.current=null; navSwipeY.current=null;
           }}
-          style={{maxWidth:480,margin:"0 auto",padding:"12px 6px 32px",display:"flex",flexDirection:"column",gap:6}}>
+          style={{maxWidth:480,margin:"0 auto",padding:"12px 6px 100px",display:"flex",flexDirection:"column",gap:6}}>
 
           {/* section header */}
           <div style={{padding:"8px 4px 4px"}}>
@@ -610,6 +634,44 @@ export default function App() {
               <span style={{fontFamily:C.font,fontSize:12,fontWeight:600,color:C.dark}}>Via Claude AI</span>
               <span style={{color:"rgba(0,0,0,0.3)",fontSize:11}}>→</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* BOTTOM NAV — gradient blur background */}
+      <div style={{
+        position:"fixed",bottom:0,left:0,right:0,zIndex:60,
+        background:"linear-gradient(to top, rgba(10,10,12,0.98) 60%, rgba(10,10,12,0) 100%)",
+        backdropFilter:"blur(20px)",
+        WebkitBackdropFilter:"blur(20px)",
+        paddingBottom:"env(safe-area-inset-bottom, 0px)",
+      }}>
+        <div style={{maxWidth:480,margin:"0 auto",position:"relative"}}>
+          {/* sliding indicator */}
+          <div style={{
+            position:"absolute",
+            top:8,
+            left:"calc("+navIdx+" * 20% + 8px)",
+            width:"calc(20% - 16px)",
+            height:"calc(100% - 24px)",
+            background:"rgba(255,255,255,0.1)",
+            borderRadius:16,
+            transition:"left 0.28s cubic-bezier(.4,0,.2,1)",
+            pointerEvents:"none",
+          }}/>
+          <div style={{display:"flex"}}>
+            {PROTEIN_NAV.map((n,i)=>(
+              <button key={n.id} onClick={()=>setNav(n.id)}
+                style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,border:"none",background:"none",cursor:"pointer",padding:"10px 0 14px",position:"relative",zIndex:1}}>
+                <div style={{fontSize:nav===n.id?20:17,transition:"font-size 0.2s",lineHeight:1}}>
+                  {n.id==="tous"?"◎":n.id==="poulet"?"🍗":n.id==="rouge"?"🥩":n.id==="poisson"?"🐟":"🫘"}
+                </div>
+                <div style={{fontFamily:C.font,fontSize:9,fontWeight:nav===n.id?700:400,color:nav===n.id?"#fff":"rgba(255,255,255,0.35)",letterSpacing:0.8,textTransform:"uppercase",transition:"all 0.2s"}}>
+                  {n.label}
+                </div>
+                {nav===n.id&&<div style={{width:16,height:2,borderRadius:1,background:"#fff",position:"absolute",bottom:6}}/>}
+              </button>
+            ))}
           </div>
         </div>
       </div>
