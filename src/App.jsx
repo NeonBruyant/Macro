@@ -253,9 +253,10 @@ function Splash({ onDone }) {
 
 // ── SHEET ─────────────────────────────────────────────────────────────────────
 function Sheet({ recipe, onClose }) {
-  const innerRef = useRef(null);
-  const startY   = useRef(null);
-  const startX   = useRef(null);
+  const innerRef   = useRef(null);
+  const handleY    = useRef(null);
+  const tabSwipeX  = useRef(null);
+  const tabSwipeY  = useRef(null);
   const [vis,setVis]           = useState(false);
   const [ty,setTy]             = useState(0);
   const [servings,setServings] = useState(recipe.baseServings);
@@ -274,32 +275,36 @@ function Sheet({ recipe, onClose }) {
 
   const close=useCallback(()=>{setVis(false);setTimeout(onClose,320);},[onClose]);
 
-  const onTS=(e)=>{
-    if(innerRef.current?.scrollTop>2) return;
-    startY.current=e.touches[0].clientY;
-    startX.current=e.touches[0].clientX;
-  };
-  const onTM=(e)=>{
-    if(!startY.current) return;
-    if(innerRef.current?.scrollTop>2){startY.current=null;return;}
-    const dy=e.touches[0].clientY-startY.current;
-    const dx=Math.abs(e.touches[0].clientX-startX.current);
-    if(dx>30){startY.current=null;return;}
+  // Drag to dismiss — ONLY on the handle bar
+  const onHandleTS=(e)=>{ handleY.current=e.touches[0].clientY; };
+  const onHandleTM=(e)=>{
+    if(!handleY.current) return;
+    const dy=e.touches[0].clientY-handleY.current;
     if(dy>0) setTy(dy);
   };
-  const onTE=(e)=>{
-    if(startX.current!==null){
-      const dx=e.changedTouches[0].clientX-startX.current;
-      const dy=Math.abs(e.changedTouches[0].clientY-startY.current);
-      if(Math.abs(dx)>50&&dy<40){
-        if(dx<0&&tabIdx<TABS.length-1) setTab(TABS[tabIdx+1].id);
-        if(dx>0&&tabIdx>0) setTab(TABS[tabIdx-1].id);
-        setTy(0);startY.current=null;startX.current=null;return;
-      }
-    }
-    if(ty>200) close(); else setTy(0);
-    startY.current=null;startX.current=null;
+  const onHandleTE=()=>{
+    if(ty>160) close(); else setTy(0);
+    handleY.current=null;
   };
+
+  // Swipe tabs — ONLY on the tab content zone
+  const onTabTS=(e)=>{
+    tabSwipeX.current=e.touches[0].clientX;
+    tabSwipeY.current=e.touches[0].clientY;
+  };
+  const onTabTE=(e)=>{
+    if(tabSwipeX.current===null) return;
+    const dx=e.changedTouches[0].clientX-tabSwipeX.current;
+    const dy=Math.abs(e.changedTouches[0].clientY-tabSwipeY.current);
+    if(Math.abs(dx)>50&&dy<60){
+      if(dx<0&&tabIdx<TABS.length-1) setTab(TABS[tabIdx+1].id);
+      if(dx>0&&tabIdx>0) setTab(TABS[tabIdx-1].id);
+    }
+    tabSwipeX.current=null; tabSwipeY.current=null;
+  };
+
+  // Keep empty handlers to avoid breaking existing refs
+  const onTS=()=>{}; const onTM=()=>{}; const onTE=()=>{};
 
   const ratio=servings/recipe.baseServings;
   const fmt=(ing,r)=>{
@@ -315,9 +320,11 @@ function Sheet({ recipe, onClose }) {
         onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}
         style={{position:"relative",zIndex:1,background:C.bg,borderRadius:"48px 48px 0 0",height:"94vh",display:"flex",flexDirection:"column",transform:"translateY("+(vis?ty:100)+"%)",transition:ty>0?"none":"transform 0.4s cubic-bezier(.32,0,.15,1)"}}>
 
-        {/* handle */}
-        <div style={{padding:"12px 0 0",display:"flex",justifyContent:"center",flexShrink:0}}>
-          <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.15)"}}/>
+        {/* handle — drag to dismiss */}
+        <div
+          onTouchStart={onHandleTS} onTouchMove={onHandleTM} onTouchEnd={onHandleTE}
+          style={{padding:"16px 0 8px",display:"flex",justifyContent:"center",flexShrink:0,cursor:"grab"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)"}}/>
         </div>
 
         <div ref={innerRef} style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"12px 6px 50px"}}>
@@ -403,7 +410,9 @@ function Sheet({ recipe, onClose }) {
               ))}
             </div>
 
-            <div style={{background:C.card,margin:"0 6px 6px",borderRadius:20,padding:"4px 0"}}>
+            <div
+              onTouchStart={onTabTS} onTouchEnd={onTabTE}
+              style={{background:C.card,margin:"0 6px 6px",borderRadius:20,padding:"4px 0"}}>
               {tab==="ingredients"&&recipe.ingredients.map((ing,i)=>(
                 <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:i<recipe.ingredients.length-1?"1px solid "+C.white:"none"}}>
                   <span style={{fontFamily:C.font,fontSize:14,color:C.text}}>{ing.name}</span>
