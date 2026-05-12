@@ -538,6 +538,7 @@ export default function App() {
 
   const navIdx = PROTEIN_NAV.findIndex(n=>n.id===nav);
   const navSwipeX = useRef(null);
+  const navSwipeY = useRef(null);
 
   useEffect(()=>{
     const l=document.createElement("link");
@@ -566,18 +567,8 @@ export default function App() {
             </button>
           </div>
 
-          {/* NAV PILLS — swipeable */}
-          <div style={{maxWidth:480,margin:"0 auto",display:"flex",gap:5,paddingBottom:10,overflowX:"auto"}}
-            onTouchStart={e=>{navSwipeX.current=e.touches[0].clientX;}}
-            onTouchEnd={e=>{
-              if(navSwipeX.current===null) return;
-              const dx=e.changedTouches[0].clientX-navSwipeX.current;
-              if(Math.abs(dx)>50){
-                if(dx<0&&navIdx<PROTEIN_NAV.length-1) setNav(PROTEIN_NAV[navIdx+1].id);
-                if(dx>0&&navIdx>0) setNav(PROTEIN_NAV[navIdx-1].id);
-              }
-              navSwipeX.current=null;
-            }}>
+          {/* NAV PILLS */}
+          <div style={{maxWidth:480,margin:"0 auto",display:"flex",gap:5,paddingBottom:10,overflowX:"auto"}}>
             {PROTEIN_NAV.map(n=>(
               <button key={n.id} onClick={()=>setNav(n.id)}
                 style={{padding:"6px 14px",borderRadius:50,border:"none",whiteSpace:"nowrap",background:nav===n.id?C.white:"rgba(255,255,255,0.1)",color:nav===n.id?C.dark:"rgba(255,255,255,0.5)",fontSize:11,fontWeight:nav===n.id?700:400,cursor:"pointer",fontFamily:C.font,letterSpacing:0.3,transition:"all 0.18s",flexShrink:0}}>
@@ -587,8 +578,20 @@ export default function App() {
           </div>
         </div>
 
-        {/* CARDS */}
-        <div style={{maxWidth:480,margin:"0 auto",padding:"12px 6px 32px",display:"flex",flexDirection:"column",gap:6}}>
+        {/* CARDS — swipe horizontal to change category */}
+        <div
+          onTouchStart={e=>{navSwipeX.current=e.touches[0].clientX; navSwipeY.current=e.touches[0].clientY;}}
+          onTouchEnd={e=>{
+            if(navSwipeX.current===null) return;
+            const dx=e.changedTouches[0].clientX-navSwipeX.current;
+            const dy=Math.abs(e.changedTouches[0].clientY-(navSwipeY.current||0));
+            if(Math.abs(dx)>60&&dy<80){
+              if(dx<0&&navIdx<PROTEIN_NAV.length-1) setNav(PROTEIN_NAV[navIdx+1].id);
+              if(dx>0&&navIdx>0) setNav(PROTEIN_NAV[navIdx-1].id);
+            }
+            navSwipeX.current=null; navSwipeY.current=null;
+          }}
+          style={{maxWidth:480,margin:"0 auto",padding:"12px 6px 32px",display:"flex",flexDirection:"column",gap:6}}>
 
           {/* section header */}
           <div style={{padding:"8px 4px 4px"}}>
