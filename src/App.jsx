@@ -44,6 +44,7 @@ const API_URL = "https://api.anthropic.com/v1/messages";
 const RECIPES = [
   {
     id:1, title:"PATATE DOUCE\nFARCIE BŒUF",
+    photo:"https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400&q=80",
     tags:["PRISE DE MASSE"], proteinSource:"rouge",
     macros:{kcal:595,prot:50,gluc:69,lip:14},
     image:"🍠", costPerServing:3.80,
@@ -74,6 +75,7 @@ const RECIPES = [
   },
   {
     id:2, title:"RISOTTO POULET\nCHAMPIGNONS",
+    photo:"https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=400&q=80",
     tags:["BATCH COOKING"], proteinSource:"poulet",
     macros:{kcal:580,prot:48,gluc:68,lip:10},
     image:"🍚", costPerServing:4.50,
@@ -102,6 +104,7 @@ const RECIPES = [
   },
   {
     id:3, title:"ROLL PAN\nFAJITAS POULET",
+    photo:"https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80",
     tags:["BATCH COOKING"], proteinSource:"poulet",
     macros:{kcal:361,prot:31,gluc:42,lip:8},
     image:"🌯", costPerServing:2.20,
@@ -133,6 +136,7 @@ const RECIPES = [
   },
   {
     id:4, title:"HOT HONEY\nBEEF BOWL",
+    photo:"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80",
     tags:["PRISE DE MASSE"], proteinSource:"rouge",
     macros:{kcal:610,prot:46,gluc:55,lip:18},
     image:"🥩", costPerServing:5.20,
@@ -157,6 +161,7 @@ const RECIPES = [
   },
   {
     id:5, title:"GRATIN THAÏ\nPOULET COCO",
+    photo:"https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80",
     tags:["BATCH COOKING"], proteinSource:"poulet",
     macros:{kcal:520,prot:45,gluc:40,lip:16},
     image:"🥥", costPerServing:3.60,
@@ -186,6 +191,7 @@ const RECIPES = [
   },
   {
     id:6, title:"DAHL PATATE\nDOUCE COCO",
+    photo:"https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&q=80",
     tags:["VÉGÉTARIEN"], proteinSource:"vege",
     macros:{kcal:490,prot:22,gluc:65,lip:12},
     image:"🫘", costPerServing:1.80,
@@ -214,6 +220,7 @@ const RECIPES = [
   },
   {
     id:7, title:"WRAPS POULET\nBLÉ COMPLET",
+    photo:"https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=400&q=80",
     tags:["BATCH COOKING"], proteinSource:"poulet",
     macros:{kcal:361,prot:31,gluc:38,lip:8},
     image:"🫓", costPerServing:2.90,
@@ -244,28 +251,31 @@ async function generateRecipe(prompt) {
   return JSON.parse(text.replace(/```json|```/g,"").trim());
 }
 
+const Logo = ({size=20, color="currentColor"}) => (
+  <svg width={size} height={size*272/290} viewBox="0 0 290 272" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M88.2427 0L88.6452 0.171791C88.8954 1.28118 88.7825 10.9674 88.7818 12.8559L88.7933 183.501C85.689 186.193 81.4513 190.671 78.4753 193.646L0.720902 271.426L0.509234 271.372C-0.373391 269.97 0.15992 105.42 0.157405 88.1723C3.90605 84.1124 7.95584 80.1097 11.9018 76.2285C37.5166 51.0356 62.4921 25.0369 88.2427 0Z" fill={color}/>
+    <path d="M203.721 81.5663C204.134 83.4088 203.883 101.105 203.876 104.439L203.865 163.373C231.749 192.015 261.128 220.592 289.389 248.987L167.644 249.001C159.414 241.102 151.001 232.409 142.901 224.312L102.02 183.368C112.357 172.476 124.321 160.997 135.005 150.313L203.721 81.5663Z" fill={color}/>
+  </svg>
+);
+
 // ── SPLASH ────────────────────────────────────────────────────────────────────
 function Splash({ onDone }) {
   const [p,setP]=useState(0);
   useEffect(()=>{
-    const t1=setTimeout(()=>setP(1),400);
-    const t2=setTimeout(()=>setP(2),2000);
-    const t3=setTimeout(()=>onDone(),2700);
+    const t1=setTimeout(()=>setP(1),300);
+    const t2=setTimeout(()=>setP(2),1800);
+    const t3=setTimeout(()=>onDone(),2400);
     return()=>{clearTimeout(t1);clearTimeout(t2);clearTimeout(t3);};
   },[]);
   return (
-    <div style={{position:"fixed",inset:0,zIndex:999,background:C.bg,display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"48px 24px",opacity:p===2?0:1,transition:p===2?"opacity 0.5s":"none"}}>
-      <div style={{fontFamily:C.font,fontSize:11,fontWeight:600,color:C.muted,letterSpacing:4,textTransform:"uppercase",opacity:p>=0?1:0,transition:"opacity 0.6s"}}>
-        KORAMACRO
+    <div style={{position:"fixed",inset:0,zIndex:999,background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",opacity:p===2?0:1,transition:p===2?"opacity 0.5s":"none"}}>
+      {/* picto centré */}
+      <div style={{opacity:p>=0?1:0,transform:p>=0?"scale(1)":"scale(0.85)",transition:"opacity 0.6s, transform 0.6s cubic-bezier(.175,.885,.32,1.275)"}}>
+        <Logo size={64} color={C.text}/>
       </div>
-      <div style={{opacity:p>=1?1:0,transform:p>=1?"translateY(0)":"translateY(20px)",transition:"opacity 0.7s 0.3s, transform 0.7s 0.3s"}}>
-        <div style={{fontFamily:C.font,fontSize:52,fontWeight:800,color:C.text,letterSpacing:-2,lineHeight:0.95,textTransform:"uppercase",marginBottom:24}}>
-          NUTRITION.<br/>PERFORMANCE.<br/>RÉSULTATS.
-        </div>
-      </div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",opacity:p>=1?1:0,transition:"opacity 0.6s 0.5s"}}>
-        <div style={{fontFamily:C.font,fontSize:9,fontWeight:600,color:C.muted,letterSpacing:3,textTransform:"uppercase"}}>OBJECTIF PRISE DE MASSE</div>
-        <div style={{fontFamily:C.mono,fontSize:9,color:C.muted}}>v1.0</div>
+      {/* version en bas */}
+      <div style={{position:"absolute",bottom:48,fontFamily:C.mono,fontSize:9,color:C.muted,letterSpacing:2,opacity:p>=1?1:0,transition:"opacity 0.5s 0.4s"}}>
+        v1.0
       </div>
     </div>
   );
@@ -555,7 +565,10 @@ export default function App() {
         {/* TOP BAR */}
         <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(231,221,221,0.92)",backdropFilter:"blur(20px)",borderBottom:"1px solid "+C.light,padding:"0 20px"}}>
           <div style={{maxWidth:480,margin:"0 auto",height:52,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{fontFamily:C.font,fontSize:11,fontWeight:700,color:C.text,letterSpacing:4,textTransform:"uppercase"}}>KORAMACRO</div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <Logo size={16} color={C.text}/>
+              <div style={{fontFamily:C.font,fontSize:11,fontWeight:700,color:C.text,letterSpacing:4,textTransform:"uppercase"}}>KORAMACRO</div>
+            </div>
 
           </div>
         </div>
