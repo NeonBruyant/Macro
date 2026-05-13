@@ -256,7 +256,7 @@ function Splash({ onDone }) {
   return (
     <div style={{position:"fixed",inset:0,zIndex:999,background:C.bg,display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"48px 24px",opacity:p===2?0:1,transition:p===2?"opacity 0.5s":"none"}}>
       <div style={{fontFamily:C.font,fontSize:11,fontWeight:600,color:C.muted,letterSpacing:4,textTransform:"uppercase",opacity:p>=0?1:0,transition:"opacity 0.6s"}}>
-        KORAMARCO
+        KORAMACRO
       </div>
       <div style={{opacity:p>=1?1:0,transform:p>=1?"translateY(0)":"translateY(20px)",transition:"opacity 0.7s 0.3s, transform 0.7s 0.3s"}}>
         <div style={{fontFamily:C.font,fontSize:52,fontWeight:800,color:C.text,letterSpacing:-2,lineHeight:0.95,textTransform:"uppercase",marginBottom:24}}>
@@ -555,7 +555,7 @@ export default function App() {
         {/* TOP BAR */}
         <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(231,221,221,0.92)",backdropFilter:"blur(20px)",borderBottom:"1px solid "+C.light,padding:"0 20px"}}>
           <div style={{maxWidth:480,margin:"0 auto",height:52,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{fontFamily:C.font,fontSize:11,fontWeight:700,color:C.text,letterSpacing:4,textTransform:"uppercase"}}>KORAMARCO</div>
+            <div style={{fontFamily:C.font,fontSize:11,fontWeight:700,color:C.text,letterSpacing:4,textTransform:"uppercase"}}>KORAMACRO</div>
 
           </div>
         </div>
