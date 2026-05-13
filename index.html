@@ -3,8 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f2ede6" />
-    <title>KoraMarco</title>
+    <meta name="theme-color" content="#E7DDDD" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="KoraMacro" />
+    <meta name="description" content="KoraMacro — Nutrition & Performance" />
+
+    <title>KoraMacro</title>
+
+    <!-- Favicon SVG -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjkwIiBoZWlnaHQ9IjI3MiIgdmlld0JveD0iMCAwIDI5MCAyNzIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik04OC4yNDI3IDBMODguNjQ1MiAwLjE3MTc5MUM4OC44OTU0IDEuMjgxMTggODguNzgyNSAxMC45Njc0IDg4Ljc4MTggMTIuODU1OUw4OC43OTMzIDE4My41MDFDODUuNjg5IDE4Ni4xOTMgODEuNDUxMyAxOTAuNjcxIDc4LjQ3NTMgMTkzLjY0NkwwLjcyMDkwMiAyNzEuNDI2TDAuNTA5MjM0IDI3MS4zNzJDLTAuMzczMzkxIDI2OS45NyAwLjE1OTkyIDEwNS40MiAwLjE1NzQwNSA4OC4xNzIzQzMuOTA2MDUgODQuMTEyNCA3Ljk1NTg0IDgwLjEwOTcgMTEuOTAxOCA3Ni4yMjg1QzM3LjUxNjYgNTEuMDM1NiA2Mi40OTIxIDI1LjAzNjkgODguMjQyNyAwWiIgZmlsbD0iIzFFMUUxRSIvPgo8cGF0aCBkPSJNMjAzLjcyMSA4MS41NjYzQzIwNC4xMzQgODMuNDA4OCAyMDMuODgzIDEwMS4xMDUgMjAzLjg3NiAxMDQuNDM5TDIwMy44NjUgMTYzLjM3M0MyMzEuNzQ5IDE5Mi4wMTUgMjYxLjEyOCAyMjAuNTkyIDI4OS4zODkgMjQ4Ljk4N0wxNjcuNjQ0IDI0OS4wMDFDMTU5LjQxNCAyNDEuMTAyIDE1MS4wMDEgMjMyLjQwOSAxNDIuOTAxIDIyNC4zMTJMMTAyLjAyIDE4My4zNjhDMTEyLjM1NyAxNzIuNDc2IDEyNC4zMjEgMTYwLjk5NyAxMzUuMDA1IDE1MC4zMTNMMjAzLjcyMSA4MS41NjYzWiIgZmlsbD0iIzFFMUUxRSIvPgo8L3N2Zz4=" />
+
+    <!-- Apple touch icon (icône sur l'écran d'accueil iPhone) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjkwIiBoZWlnaHQ9IjI3MiIgdmlld0JveD0iMCAwIDI5MCAyNzIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik04OC4yNDI3IDBMODguNjQ1MiAwLjE3MTc5MUM4OC44OTU0IDEuMjgxMTggODguNzgyNSAxMC45Njc0IDg4Ljc4MTggMTIuODU1OUw4OC43OTMzIDE4My41MDFDODUuNjg5IDE4Ni4xOTMgODEuNDUxMyAxOTAuNjcxIDc4LjQ3NTMgMTkzLjY0NkwwLjcyMDkwMiAyNzEuNDI2TDAuNTA5MjM0IDI3MS4zNzJDLTAuMzczMzkxIDI2OS45NyAwLjE1OTkyIDEwNS40MiAwLjE1NzQwNSA4OC4xNzIzQzMuOTA2MDUgODQuMTEyNCA3Ljk1NTg0IDgwLjEwOTcgMTEuOTAxOCA3Ni4yMjg1QzM3LjUxNjYgNTEuMDM1NiA2Mi40OTIxIDI1LjAzNjkgODguMjQyNyAwWiIgZmlsbD0iIzFFMUUxRSIvPgo8cGF0aCBkPSJNMjAzLjcyMSA4MS41NjYzQzIwNC4xMzQgODMuNDA4OCAyMDMuODgzIDEwMS4xMDUgMjAzLjg3NiAxMDQuNDM5TDIwMy44NjUgMTYzLjM3M0MyMzEuNzQ5IDE5Mi4wMTUgMjYxLjEyOCAyMjAuNTkyIDI4OS4zODkgMjQ4Ljk4N0wxNjcuNjQ0IDI0OS4wMDFDMTU5LjQxNCAyNDEuMTAyIDE1MS4wMDEgMjMyLjQwOSAxNDIuOTAxIDIyNC4zMTJMMTAyLjAyIDE4My4zNjhDMTEyLjM1NyAxNzIuNDc2IDEyNC4zMjEgMTYwLjk5NyAxMzUuMDA1IDE1MC4zMTNMMjAzLjcyMSA4MS41NjYzWiIgZmlsbD0iIzFFMUUxRSIvPgo8L3N2Zz4=" />
   </head>
   <body>
     <div id="root"></div>
