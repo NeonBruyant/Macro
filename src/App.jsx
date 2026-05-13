@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 
-// ── TOKENS — Jacob Turner style ───────────────────────────────────────────────
+// ── TOKENS - Jacob Turner style ───────────────────────────────────────────────
 const C = {
   bg:    "#E7DDDD",   // fond crème
   bg2:   "#DDD0D0",
@@ -22,17 +23,17 @@ const PROTEIN_NAV = [
   {id:"vege",    label:"VÉGÉ"},
 ];
 
-// SVG icons — filaire minimaliste, lisible à petite taille
+// SVG icons - filaire minimaliste, lisible à petite taille
 const NAV_ICONS = {
-  // Tous — grille 2x2 simple
+  // Tous - grille 2x2 simple
   tous:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
-  // Poulet — drumstick SVG original
+  // Poulet - drumstick SVG original
   poulet:  <svg width="16" height="16" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.02625 29.375C6.63466 28.8921 6.3559 28.3278 6.21036 27.7233C6.06481 27.1188 6.05615 26.4895 6.185 25.8813C5.56181 26.0041 4.91911 25.9868 4.30341 25.8307C3.68771 25.6747 3.11441 25.3836 2.625 24.9788C-0.491252 21.8625 4.35125 17.02 7.72 21.6038L11.4887 17.7625L14.1412 20.4138L10.375 24.2575C14.9875 27.5988 10.1437 32.5 7.02625 29.375Z"/><path d="M15.0875 21.3612L10.6687 16.94C8.30498 14.5775 18.7125 -5.15752 27.935 4.06498C37.2225 13.35 17.15 23.4225 15.0875 21.3612Z"/></svg>,
-  // Bœuf — steak SVG original
+  // Bœuf - steak SVG original
   rouge:   <svg width="16" height="16" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.125 1.625C10.8098 1.625 7.63037 2.94196 5.28617 5.28617C2.94196 7.63037 1.625 10.8098 1.625 14.125V24.75C1.625 26.2418 2.21763 27.6726 3.27252 28.7275C4.32742 29.7824 5.75816 30.375 7.25 30.375C8.74184 30.375 10.1726 29.7824 11.2275 28.7275C12.2824 27.6726 12.875 26.2418 12.875 24.75C12.875 23.2582 13.4676 21.8274 14.5225 20.7725C15.5774 19.7176 17.0082 19.125 18.5 19.125H21.625C23.9456 19.125 26.1712 18.2031 27.8122 16.5622C29.4531 14.9212 30.375 12.6956 30.375 10.375C30.375 8.05436 29.4531 5.82876 27.8122 4.18782C26.1712 2.54687 23.9456 1.625 21.625 1.625H14.125Z"/><path d="M15.375 5.375C12.7229 5.375 10.1793 6.42857 8.30397 8.30393C6.42861 10.1793 5.37504 12.7228 5.37504 15.375V17.25C5.30881 18.1581 5.59754 19.0565 6.18043 19.7559C6.76332 20.4554 7.59489 20.9014 8.50004 21C11 21 8.64754 15.375 17.25 15.375H21.625C22.9511 15.375 24.2229 14.8482 25.1606 13.9105C26.0983 12.9729 26.625 11.7011 26.625 10.375C26.625 9.04892 26.0983 7.77715 25.1606 6.83947C24.2229 5.90178 22.9511 5.375 21.625 5.375H15.375Z"/><path d="M6 24.75C6 25.0815 6.1317 25.3995 6.36612 25.6339C6.60054 25.8683 6.91848 26 7.25 26C7.58152 26 7.89946 25.8683 8.13388 25.6339C8.3683 25.3995 8.5 25.0815 8.5 24.75C8.5 24.4185 8.3683 24.1005 8.13388 23.8661C7.89946 23.6317 7.58152 23.5 7.25 23.5C6.91848 23.5 6.60054 23.6317 6.36612 23.8661C6.1317 24.1005 6 24.4185 6 24.75Z"/></svg>,
-  // Poisson — forme reconnaissable
+  // Poisson - forme reconnaissable
   poisson: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 12c0 0 2-5 7-5s8 5 8 5-3 5-8 5-7-5-7-5z"/><path d="M3 8c0 0 0 4 3 4"/><path d="M3 16c0 0 0-4 3-4"/><circle cx="17" cy="11.5" r="0.8" fill="currentColor" stroke="none"/></svg>,
-  // Végé — feuille simple
+  // Végé - feuille simple
   vege:    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21V11"/><path d="M12 11c0-4 3-8 9-9-1 6-4 9-9 9z"/><path d="M12 11c0-4-3-8-9-9 1 6 4 9 9 9z"/></svg>,
 };
 
@@ -77,7 +78,7 @@ const RECIPES = [
     tags:["BATCH COOKING"], proteinSource:"poulet",
     macros:{kcal:580,prot:48,gluc:68,lip:10},
     image:"🍚", costPerServing:4.50,
-    description:"Fromage blanc en finition — crémeux sans les lipides.",
+    description:"Fromage blanc en finition - crémeux sans les lipides.",
     type:"full", baseServings:2,
     ingredients:[
       {id:"01",name:"Riz arborio",amount:160,unit:"g"},
@@ -177,7 +178,7 @@ const RECIPES = [
       {id:"12",name:"Coriandre fraîche",amount:1,unit:"cs"},
     ],
     steps:[
-      {title:"RIZ",content:"Cuire al dente — finira au four."},
+      {title:"RIZ",content:"Cuire al dente - finira au four."},
       {title:"CURRY",content:"Ail + gingembre + pâte curry + poulet. 5 min."},
       {title:"LÉGUMES",content:"Champignons + poivron + petits pois + lait de coco + soja. 5 min."},
       {title:"GRATIN",content:"Riz + préparation dans un plat. 20 min à 180°C."},
@@ -274,52 +275,49 @@ function Splash({ onDone }) {
 // ── BOTTOM SHEET ─────────────────────────────────────────────────────────────
 function Sheet({ recipe, onClose }) {
   const innerRef   = useRef(null);
-  const dragY      = useRef(null);
-  const dragStartST= useRef(0);
   const tabSwipeX  = useRef(null);
   const tabSwipeY  = useRef(null);
+  const [servings, setServings] = useState(recipe.baseServings);
+  const [tab, setTab]           = useState("ingredients");
+  const [open, setOpen]         = useState(true);
 
-  const [vis,setVis]           = useState(false);
-  const [snap,setSnap]         = useState(0);   // 0 = mi-écran (55vh), 1 = plein écran
-  const [ty,setTy]             = useState(0);   // drag en cours
-  const [servings,setServings] = useState(recipe.baseServings);
-  const [tab,setTab]           = useState("ingredients");
+  const TABS    = [{id:"ingredients",label:"INGRÉDIENTS"},{id:"steps",label:"PRÉPARATION"},{id:"shopping",label:"COURSES"}];
+  const tabIdx  = TABS.findIndex(t=>t.id===tab);
+  const ratio   = servings/recipe.baseServings;
 
-  const TABS = [{id:"ingredients",label:"INGRÉDIENTS"},{id:"steps",label:"PRÉPARATION"},{id:"shopping",label:"COURSES"}];
-  const tabIdx = TABS.findIndex(t=>t.id===tab);
-  const ratio  = servings/recipe.baseServings;
+  const y = useMotionValue(0);
+  const HALF   = typeof window !== "undefined" ? window.innerHeight * 0.45 : 400;
+  const FULL   = 0;
+  const HIDDEN = typeof window !== "undefined" ? window.innerHeight : 800;
+
+  const overlayOpacity = useTransform(y, [0, HALF], [0.4, 0.1]);
 
   useEffect(()=>{
-    requestAnimationFrame(()=>setVis(true));
-    document.body.style.overflow="hidden";
-    return()=>{document.body.style.overflow="";};
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
   },[]);
 
-  const close=useCallback(()=>{setVis(false);setTimeout(onClose,340);},[onClose]);
+  const close = useCallback(() => {
+    setOpen(false);
+    setTimeout(onClose, 350);
+  }, [onClose]);
 
-  // ── drag handlers ──
-  const onTS=(e)=>{
-    dragY.current      = e.touches[0].clientY;
-    dragStartST.current= innerRef.current?.scrollTop||0;
-  };
-  const onTM=(e)=>{
-    if(dragY.current===null) return;
-    // seulement si on est en haut du scroll
-    if(dragStartST.current>2){ dragY.current=null; return; }
-    const dy=e.touches[0].clientY-dragY.current;
-    if(dy>0) setTy(Math.min(dy,300)); // drag vers le bas
-  };
-  const onTE=(e)=>{
-    if(dragY.current===null) return;
-    const dy=e.changedTouches[0].clientY-dragY.current;
-    setTy(0);
-    if(dy<-60)       setSnap(1);          // swipe haut fort → plein écran
-    else if(dy>120 && snap===1) setSnap(0); // swipe bas fort depuis plein → mi
-    else if(dy>120 && snap===0) close();    // swipe bas fort depuis mi → ferme
-    dragY.current=null;
+  const onDragEnd = (_, info) => {
+    const cur = y.get();
+    const vel = info.velocity.y;
+    if (vel > 500 || cur > HALF * 0.6) {
+      if (cur < HALF * 0.3) {
+        y.set(HALF); // snap to half
+      } else {
+        close(); // dismiss
+      }
+    } else {
+      // snap to nearest
+      if (cur < HALF / 2) y.set(FULL);
+      else y.set(HALF);
+    }
   };
 
-  // ── tab swipe ──
   const onTabTS=(e)=>{ tabSwipeX.current=e.touches[0].clientX; tabSwipeY.current=e.touches[0].clientY; };
   const onTabTE=(e)=>{
     if(tabSwipeX.current===null) return;
@@ -337,142 +335,153 @@ function Sheet({ recipe, onClose }) {
     return ing.unit?d+" "+ing.unit:String(d);
   };
 
-  const height = snap===1 ? "100dvh" : "58vh";
-  const radius = snap===1 ? 0 : 16;
-  const translateY = vis ? ty : "100%";
-
   return (
-    <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end",pointerEvents:"none"}}>
-      {/* backdrop */}
-      <div onClick={close}
-        style={{position:"absolute",inset:0,background:"rgba(15,15,15,0.25)",opacity:vis&&ty===0?1:Math.max(0,1-ty/300),transition:ty>0?"none":"opacity 0.3s",backdropFilter:"blur(3px)",pointerEvents:"auto"}}/>
+    <AnimatePresence>
+      {open && (
+        <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
 
-      {/* sheet */}
-      <div
-        onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}
-        style={{
-          position:"relative",zIndex:1,
-          background:C.bg,
-          borderRadius:radius+"px "+radius+"px 0 0",
-          height,
-          display:"flex",flexDirection:"column",
-          transform:typeof translateY==="string"?"translateY("+translateY+")":"translateY("+translateY+"px)",
-          transition:ty>0?"none":"transform 0.42s cubic-bezier(.32,0,.15,1), height 0.42s cubic-bezier(.32,0,.15,1), border-radius 0.42s",
-          pointerEvents:"auto",
-          willChange:"transform",
-        }}>
+          {/* backdrop */}
+          <motion.div
+            onClick={close}
+            style={{position:"absolute",inset:0,background:"rgba(15,15,15,1)",opacity:overlayOpacity,backdropFilter:"blur(3px)"}}
+          />
 
-        {/* handle */}
-        <div style={{padding:"10px 0 0",display:"flex",justifyContent:"center",flexShrink:0}}>
-          <div style={{width:32,height:3,borderRadius:2,background:C.light}}/>
-        </div>
+          {/* sheet */}
+          <motion.div
+            drag="y"
+            dragConstraints={{top:0, bottom:HALF}}
+            dragElastic={{top:0.05, bottom:0.3}}
+            onDragEnd={onDragEnd}
+            style={{
+              y,
+              position:"relative",zIndex:1,
+              background:C.bg,
+              borderRadius:"16px 16px 0 0",
+              height:"100vh",
+              display:"flex",flexDirection:"column",
+              touchAction:"none",
+            }}
+            initial={{y: HALF}}
+            animate={{y: HALF}}
+            exit={{y: HIDDEN, transition:{duration:0.3}}}
+            transition={{type:"spring", damping:30, stiffness:300}}
+          >
+            {/* handle */}
+            <div style={{padding:"10px 0 0",display:"flex",justifyContent:"center",flexShrink:0,cursor:"grab"}}>
+              <div style={{width:32,height:3,borderRadius:2,background:C.light}}/>
+            </div>
 
-        {/* title row */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 12px",borderBottom:"1px solid "+C.light,flexShrink:0}}>
-          <div style={{fontFamily:C.font,fontSize:13,fontWeight:800,color:C.text,letterSpacing:-0.3,textTransform:"uppercase",lineHeight:1,whiteSpace:"pre-line"}}>{recipe.title}</div>
-          <button onClick={close} style={{background:"none",border:"none",fontFamily:C.font,fontSize:9,color:C.muted,letterSpacing:2,cursor:"pointer",textTransform:"uppercase",flexShrink:0,marginLeft:12}}>FERMER</button>
-        </div>
+            {/* title row */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 12px",borderBottom:"1px solid "+C.light,flexShrink:0}}>
+              <div style={{fontFamily:C.font,fontSize:13,fontWeight:800,color:C.text,letterSpacing:-0.3,textTransform:"uppercase",lineHeight:1,whiteSpace:"pre-line"}}>{recipe.title}</div>
+              <div onClick={close} style={{fontFamily:C.font,fontSize:9,color:C.muted,letterSpacing:2,cursor:"pointer",textTransform:"uppercase",flexShrink:0,marginLeft:12}}>FERMER</div>
+            </div>
 
-        <div ref={innerRef} style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-
-          {/* MACROS */}
-          <div style={{display:"flex",borderBottom:"1px solid "+C.light}}>
-            {[
-              {l:"PROTÉINES",v:recipe.macros.prot,u:"g"},
-              {l:"GLUCIDES", v:recipe.macros.gluc,u:"g"},
-              {l:"LIPIDES",  v:recipe.macros.lip, u:"g"},
-              {l:"CALORIES", v:recipe.macros.kcal,u:""},
-            ].map((m,i)=>(
-              <div key={m.l} style={{width:"25%",borderRight:i<3?"1px solid "+C.light:"none",padding:"12px 0 10px 14px",boxSizing:"border-box"}}>
-                <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{m.l}</div>
-                <div style={{fontFamily:C.mono,fontSize:18,color:i===0?C.text:C.mid,lineHeight:1}}>{m.v}<span style={{fontFamily:C.font,fontSize:9,color:C.muted,marginLeft:1}}>{m.u}</span></div>
+            {/* scrollable content — drag only on handle, scroll inside */}
+            <div
+              ref={innerRef}
+              onTouchStart={e=>e.stopPropagation()}
+              style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}
+            >
+              {/* MACROS */}
+              <div style={{display:"flex",borderBottom:"1px solid "+C.light}}>
+                {[
+                  {l:"PROTÉINES",v:recipe.macros.prot,u:"g"},
+                  {l:"GLUCIDES", v:recipe.macros.gluc,u:"g"},
+                  {l:"LIPIDES",  v:recipe.macros.lip, u:"g"},
+                  {l:"CALORIES", v:recipe.macros.kcal,u:""},
+                ].map((m,i)=>(
+                  <div key={m.l} style={{width:"25%",borderRight:i<3?"1px solid "+C.light:"none",padding:"12px 0 10px 14px",boxSizing:"border-box"}}>
+                    <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{m.l}</div>
+                    <div style={{fontFamily:C.mono,fontSize:18,color:i===0?C.text:C.mid,lineHeight:1}}>{m.v}<span style={{fontFamily:C.font,fontSize:9,color:C.muted,marginLeft:1}}>{m.u}</span></div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* PORTIONS — label 62.5% | − 12.5% | valeur 12.5% | + 12.5% */}
-          <div style={{display:"flex",borderBottom:"1px solid "+C.light,height:56,overflow:"hidden"}}>
-            <div style={{width:"62.5%",borderRight:"1px solid "+C.light,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 0 0 14px",boxSizing:"border-box",flexShrink:0}}>
-              <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>PORTIONS</div>
-              <div style={{fontFamily:C.font,fontSize:9,color:C.muted}}>Ajuste les quantités</div>
-            </div>
-            <div onClick={()=>setServings(s=>Math.max(1,s-1))}
-              style={{width:"12.5%",borderRight:"1px solid "+C.light,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:20,color:C.text,cursor:"pointer",userSelect:"none",boxSizing:"border-box",flexShrink:0}}>−</div>
-            <div style={{width:"12.5%",borderRight:"1px solid "+C.light,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:16,fontWeight:600,color:C.text,boxSizing:"border-box",flexShrink:0}}>{servings}</div>
-            <div onClick={()=>setServings(s=>Math.min(12,s+1))}
-              style={{width:"12.5%",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:20,color:C.text,cursor:"pointer",userSelect:"none",boxSizing:"border-box",flexShrink:0}}>+</div>
-          </div>
+              {/* PORTIONS */}
+              <div style={{display:"flex",borderBottom:"1px solid "+C.light,height:56,overflow:"hidden"}}>
+                <div style={{width:"62.5%",borderRight:"1px solid "+C.light,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 0 0 14px",boxSizing:"border-box",flexShrink:0}}>
+                  <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>PORTIONS</div>
+                  <div style={{fontFamily:C.font,fontSize:9,color:C.muted}}>Ajuste les quantités</div>
+                </div>
+                <div onClick={()=>setServings(s=>Math.max(1,s-1))}
+                  style={{width:"12.5%",borderRight:"1px solid "+C.light,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:20,color:C.text,cursor:"pointer",userSelect:"none",boxSizing:"border-box",flexShrink:0}}>-</div>
+                <div style={{width:"12.5%",borderRight:"1px solid "+C.light,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:16,fontWeight:600,color:C.text,boxSizing:"border-box",flexShrink:0}}>{servings}</div>
+                <div onClick={()=>setServings(s=>Math.min(12,s+1))}
+                  style={{width:"12.5%",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:20,color:C.text,cursor:"pointer",userSelect:"none",boxSizing:"border-box",flexShrink:0}}>+</div>
+              </div>
 
-          {/* COÛT */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"12px 20px",borderBottom:"1px solid "+C.light}}>
-            <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase"}}>COÛT / PORTION</div>
-            <div style={{fontFamily:C.mono,fontSize:16,color:C.text}}>{"~"+recipe.costPerServing.toFixed(2)+" €"}</div>
-          </div>
+              {/* COÛT */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"12px 20px",borderBottom:"1px solid "+C.light}}>
+                <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase"}}>COÛT / PORTION</div>
+                <div style={{fontFamily:C.mono,fontSize:16,color:C.text}}>{"~"+recipe.costPerServing.toFixed(2)+" €"}</div>
+              </div>
 
-          {/* TABS */}
-          <div onTouchStart={onTabTS} onTouchEnd={onTabTE}>
-            <div style={{position:"relative",display:"flex",borderBottom:"1px solid "+C.light}}>
-              <div style={{position:"absolute",bottom:-1,left:0,height:2,background:C.dark,width:"33.333%",transform:"translateX(calc("+tabIdx+" * 100%))",transition:"transform 0.28s cubic-bezier(.4,0,.2,1)"}}/>
-              {TABS.map((t,i)=>(
-                <button key={t.id} onClick={()=>setTab(t.id)}
-                  style={{flex:1,padding:"11px 0",border:"none",borderLeft:i>0?"1px solid "+C.light:"none",background:"none",fontFamily:C.font,fontSize:8,fontWeight:700,color:tab===t.id?C.text:C.muted,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",transition:"color 0.2s"}}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
-            {/* SLIDING PANELS */}
-            <div style={{overflow:"hidden"}}>
-              <div style={{display:"flex",width:"300%",transform:"translateX(calc(-"+(tabIdx*(100/3))+"%))",transition:"transform 0.3s cubic-bezier(.4,0,.2,1)"}}>
-
-                {/* INGRÉDIENTS */}
-                <div style={{width:"33.333%",flexShrink:0}}>
-                  {recipe.ingredients.map((ing,i)=>(
-                    <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"13px 20px",borderBottom:"1px solid "+C.light}}>
-                      <span style={{fontFamily:C.font,fontSize:13,color:C.text}}>{ing.name}</span>
-                      <span style={{fontFamily:C.mono,fontSize:12,color:C.mid}}>{fmt(ing,ratio)}</span>
+              {/* TABS */}
+              <div onTouchStart={onTabTS} onTouchEnd={onTabTE}>
+                <div style={{position:"relative",display:"flex",borderBottom:"1px solid "+C.light}}>
+                  <div style={{position:"absolute",bottom:-1,left:0,height:2,background:C.dark,width:"33.333%",transform:"translateX(calc("+tabIdx+" * 100%))",transition:"transform 0.28s cubic-bezier(.4,0,.2,1)"}}/>
+                  {TABS.map((t,i)=>(
+                    <div key={t.id} onClick={()=>setTab(t.id)}
+                      style={{flex:1,padding:"11px 0",borderLeft:i>0?"1px solid "+C.light:"none",fontFamily:C.font,fontSize:8,fontWeight:700,color:tab===t.id?C.text:C.muted,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",transition:"color 0.2s",textAlign:"center"}}>
+                      {t.label}
                     </div>
                   ))}
                 </div>
 
-                {/* PRÉPARATION */}
-                <div style={{width:"33.333%",flexShrink:0}}>
-                  {(recipe.steps&&recipe.steps.length>0
-                    ? recipe.steps
-                    : [{title:"PRÉPARATION",content:recipe.assemblyNote||""}]
-                  ).map((step,i)=>(
-                    <div key={i} style={{display:"flex",borderBottom:"1px solid "+C.light}}>
-                      <div style={{width:44,flexShrink:0,borderRight:"1px solid "+C.light,display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:14}}>
-                        <span style={{fontFamily:C.mono,fontSize:10,color:C.muted}}>{i<9?"0"+(i+1):i+1}</span>
-                      </div>
-                      <div style={{flex:1,padding:"13px 20px"}}>
-                        <div style={{fontFamily:C.font,fontSize:8,fontWeight:700,color:C.text,letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>{step.title}</div>
-                        <div style={{fontFamily:C.font,fontSize:13,color:C.mid,lineHeight:1.6}}>{step.content}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <div style={{overflow:"hidden"}}>
+                  <div style={{display:"flex",width:"300%",transform:"translateX(calc(-"+(tabIdx*(100/3))+"%))",transition:"transform 0.3s cubic-bezier(.4,0,.2,1)"}}>
 
-                {/* COURSES */}
-                <div style={{width:"33.333%",flexShrink:0}}>
-                  {recipe.ingredients.map((ing,i)=>(
-                    <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"13px 20px",borderBottom:"1px solid "+C.light}}>
-                      <span style={{fontFamily:C.font,fontSize:13,color:C.text}}>{ing.name}</span>
-                      <span style={{fontFamily:C.mono,fontSize:12,color:C.mid}}>{fmt(ing,ratio)}</span>
+                    {/* INGRÉDIENTS */}
+                    <div style={{width:"33.333%",flexShrink:0}}>
+                      {recipe.ingredients.map((ing,i)=>(
+                        <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"13px 20px",borderBottom:"1px solid "+C.light}}>
+                          <span style={{fontFamily:C.font,fontSize:13,color:C.text}}>{ing.name}</span>
+                          <span style={{fontFamily:C.mono,fontSize:12,color:C.mid}}>{fmt(ing,ratio)}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"14px 20px",borderTop:"2px solid "+C.dark}}>
-                    <div style={{fontFamily:C.font,fontSize:7,fontWeight:700,color:C.muted,letterSpacing:2,textTransform:"uppercase"}}>TOTAL ESTIMÉ</div>
-                    <div style={{fontFamily:C.mono,fontSize:20,color:C.text}}>{"~"+(recipe.costPerServing*servings).toFixed(2)+"€"}</div>
+
+                    {/* PRÉPARATION */}
+                    <div style={{width:"33.333%",flexShrink:0}}>
+                      {(recipe.steps&&recipe.steps.length>0
+                        ? recipe.steps
+                        : [{title:"PRÉPARATION",content:recipe.assemblyNote||""}]
+                      ).map((step,i)=>(
+                        <div key={i} style={{display:"flex",borderBottom:"1px solid "+C.light}}>
+                          <div style={{width:44,flexShrink:0,borderRight:"1px solid "+C.light,display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:14}}>
+                            <span style={{fontFamily:C.mono,fontSize:10,color:C.muted}}>{i<9?"0"+(i+1):i+1}</span>
+                          </div>
+                          <div style={{flex:1,padding:"13px 20px"}}>
+                            <div style={{fontFamily:C.font,fontSize:8,fontWeight:700,color:C.text,letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>{step.title}</div>
+                            <div style={{fontFamily:C.font,fontSize:13,color:C.mid,lineHeight:1.6}}>{step.content}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* COURSES */}
+                    <div style={{width:"33.333%",flexShrink:0}}>
+                      {recipe.ingredients.map((ing,i)=>(
+                        <div key={ing.id} style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"13px 20px",borderBottom:"1px solid "+C.light}}>
+                          <span style={{fontFamily:C.font,fontSize:13,color:C.text}}>{ing.name}</span>
+                          <span style={{fontFamily:C.mono,fontSize:12,color:C.mid}}>{fmt(ing,ratio)}</span>
+                        </div>
+                      ))}
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"14px 20px",borderTop:"2px solid "+C.dark}}>
+                        <div style={{fontFamily:C.font,fontSize:7,fontWeight:700,color:C.muted,letterSpacing:2,textTransform:"uppercase"}}>TOTAL ESTIMÉ</div>
+                        <div style={{fontFamily:C.mono,fontSize:20,color:C.text}}>{"~"+(recipe.costPerServing*servings).toFixed(2)+"€"}</div>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
-
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -498,7 +507,7 @@ function GenModal({ onClose, onAdd }) {
         <div style={{fontFamily:C.font,fontSize:9,fontWeight:600,color:C.muted,letterSpacing:3,textTransform:"uppercase",marginBottom:12}}>NOUVELLE RECETTE</div>
         <div style={{fontFamily:C.font,fontSize:32,fontWeight:800,color:C.text,letterSpacing:-1,textTransform:"uppercase",lineHeight:1,marginBottom:24}}>GÉNÉRER<br/>VIA CLAUDE.</div>
         <div style={{height:1,background:C.light,marginBottom:24}}/>
-        <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Décris ce que tu veux — bowl saumon, poulet épicé, rapide..."
+        <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Décris ce que tu veux - bowl saumon, poulet épicé, rapide..."
           style={{width:"100%",minHeight:80,border:"none",borderBottom:"1px solid "+C.light,padding:"0 0 12px",fontSize:14,fontFamily:C.font,resize:"none",outline:"none",background:"transparent",color:C.text,lineHeight:1.5}}/>
         {err&&<div style={{color:"#c0392b",fontSize:12,marginTop:6,fontFamily:C.font}}>{err}</div>}
         <button onClick={go} disabled={loading||!prompt.trim()}
@@ -510,22 +519,21 @@ function GenModal({ onClose, onAdd }) {
   );
 }
 
-// ── RECIPE CARD — Product Passport style ─────────────────────────────────────
+// ── RECIPE CARD - Product Passport style ─────────────────────────────────────
 function RecipeCard({ r, onClick, i }) {
   return (
     <div onClick={()=>onClick(r)}
       style={{background:"transparent",borderRadius:0,overflow:"hidden",cursor:"pointer",borderTop:"1px solid "+C.light,borderBottom:"1px solid "+C.light,animationName:"up",animationDuration:"0.35s",animationDelay:(i*0.05)+"s",animationFillMode:"both",WebkitTapHighlightColor:"transparent"}}>
 
-      {/* main area — image left, title right */}
+      {/* main area - image left, title right */}
       <div style={{display:"flex",borderBottom:"1px solid "+C.light}}>
         <div style={{width:"25%",flexShrink:0,background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:54,borderRight:"1px solid "+C.light,padding:"20px 0",boxSizing:"border-box"}}>
           {r.image}
         </div>
         <div style={{width:"75%",padding:"16px 16px 14px",boxSizing:"border-box"}}>
-          {r.type==="assembly"&&(
-            <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>RAPIDE</div>
-          )}
-          <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>RECETTE</div>
+          <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>
+            {r.type==="assembly" ? "RECETTE RAPIDE" : "RECETTE"}
+          </div>
           <div style={{fontFamily:C.font,fontSize:20,fontWeight:800,color:C.text,letterSpacing:-0.3,textTransform:"uppercase",lineHeight:0.95,marginBottom:10,whiteSpace:"pre-line"}}>{r.title}</div>
           <div style={{fontFamily:C.font,fontSize:11,color:C.mid,lineHeight:1.5}}>{r.description}</div>
         </div>
@@ -565,9 +573,7 @@ export default function App() {
 
   const changeNav = (id) => {
     setNav(id);
-    // Scroll back to top on category change
-    if (scrollRef.current) scrollRef.current.scrollTo({top:0, behavior:"smooth"});
-    else window.scrollTo({top:0, behavior:"smooth"});
+    window.scrollTo({top:0, behavior:"smooth"});
   };
 
   useEffect(()=>{
@@ -589,23 +595,8 @@ export default function App() {
         <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(231,221,221,0.92)",backdropFilter:"blur(20px)",borderBottom:"1px solid "+C.light,padding:"0 20px"}}>
           <div style={{maxWidth:480,margin:"0 auto",height:52,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div style={{fontFamily:C.font,fontSize:11,fontWeight:700,color:C.text,letterSpacing:4,textTransform:"uppercase"}}>KORAMARCO</div>
-            <button onClick={()=>setModal(true)}
-              style={{background:"none",border:"1px solid "+C.dark,borderRadius:50,padding:"6px 18px",fontSize:9,fontWeight:700,color:C.text,fontFamily:C.font,letterSpacing:2,textTransform:"uppercase",cursor:"pointer",transition:"all 0.15s"}}
-              onMouseEnter={e=>{e.currentTarget.style.background=C.dark;e.currentTarget.style.color="#fff";}}
-              onMouseLeave={e=>{e.currentTarget.style.background="none";e.currentTarget.style.color=C.text;}}>
-              + GÉNÉRER
-            </button>
-          </div>
-        </div>
 
-        {/* HERO */}
-        <div style={{maxWidth:480,margin:"0 auto",padding:"32px 20px 16px"}}>
-          <div style={{fontFamily:C.font,fontSize:9,fontWeight:600,color:C.muted,letterSpacing:4,textTransform:"uppercase",marginBottom:12}}>CARNET PERSONNEL</div>
-          <div style={{fontFamily:C.font,fontSize:56,fontWeight:800,color:C.text,letterSpacing:-2,lineHeight:0.92,textTransform:"uppercase",marginBottom:16}}>
-            MES<br/>RECETTES.
           </div>
-          <div style={{height:1,background:C.light,marginBottom:12}}/>
-          <div style={{fontFamily:C.font,fontSize:10,color:C.muted,letterSpacing:1,marginBottom:0}}>{recipes.length+" RECETTES  ·  OBJECTIF PRISE DE MASSE"}</div>
         </div>
 
         {/* SLIDING PANELS */}
@@ -628,17 +619,7 @@ export default function App() {
               return (
                 <div key={n.id} style={{width:(100/PROTEIN_NAV.length)+"%",flexShrink:0,padding:"0 0 120px",display:"flex",flexDirection:"column",gap:0}}>
                   {panelRecipes.map((r,i)=><RecipeCard key={r.id} r={r} onClick={setSelected} i={i}/>)}
-                  <div onClick={()=>setModal(true)}
-                    style={{borderRadius:0,padding:"32px 20px",display:"flex",flexDirection:"column",gap:12,cursor:"pointer",borderTop:"1px solid "+C.light,borderBottom:"1px solid "+C.light,WebkitTapHighlightColor:"transparent",transition:"background 0.15s"}}
-                    onMouseEnter={e=>e.currentTarget.style.background=C.bg2}
-                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                    <div style={{fontFamily:C.font,fontSize:9,fontWeight:600,color:C.muted,letterSpacing:3,textTransform:"uppercase"}}>NOUVELLE RECETTE</div>
-                    <div style={{fontFamily:C.font,fontSize:28,fontWeight:800,color:C.text,letterSpacing:-0.5,textTransform:"uppercase",lineHeight:1}}>GÉNÉRER<br/>VIA CLAUDE.</div>
-                    <div style={{display:"inline-flex",width:"fit-content",alignItems:"center",gap:8,background:C.dark,borderRadius:50,padding:"10px 20px",marginTop:4}}>
-                      <span style={{fontFamily:C.font,fontSize:10,fontWeight:700,color:"#fff",letterSpacing:2,textTransform:"uppercase"}}>DÉMARRER</span>
-                      <span style={{color:"rgba(255,255,255,0.4)"}}>→</span>
-                    </div>
-                  </div>
+
                 </div>
               );
             })}
@@ -646,10 +627,10 @@ export default function App() {
         </div>
       </div>
 
-      {/* BOTTOM NAV — Product Passport style */}
+      {/* BOTTOM NAV - Product Passport style */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:60,background:"rgba(231,221,221,0.97)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderTop:"1px solid "+C.light,paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
         <div style={{maxWidth:480,margin:"0 auto"}}>
-          {/* value row — sliding underline */}
+          {/* value row - sliding underline */}
           <div style={{position:"relative",display:"flex"}}>
             {/* sliding underline indicator */}
             <div style={{position:"absolute",bottom:0,left:"calc("+navIdx+" * 20%)",width:"20%",height:2,background:C.dark,transition:"left 0.28s cubic-bezier(.4,0,.2,1)"}}/>
