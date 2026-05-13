@@ -271,23 +271,23 @@ function Splash({ onDone }) {
   );
 }
 
-// ── BOTTOM SHEET ──────────────────────────────────────────────────────────────
+// ── BOTTOM SHEET ─────────────────────────────────────────────────────────────
 function Sheet({ recipe, onClose }) {
-  const innerRef  = useRef(null);
-  const startY    = useRef(null);
-  const startST   = useRef(0);
-  const tabSwipeX = useRef(null);
-  const tabSwipeY = useRef(null);
+  const innerRef   = useRef(null);
+  const dragY      = useRef(null);
+  const dragStartST= useRef(0);
+  const tabSwipeX  = useRef(null);
+  const tabSwipeY  = useRef(null);
+
   const [vis,setVis]           = useState(false);
-  const [expanded,setExpanded] = useState(false); // false = mi-écran, true = plein écran
-  const [ty,setTy]             = useState(0);
+  const [snap,setSnap]         = useState(0);   // 0 = mi-écran (55vh), 1 = plein écran
+  const [ty,setTy]             = useState(0);   // drag en cours
   const [servings,setServings] = useState(recipe.baseServings);
   const [tab,setTab]           = useState("ingredients");
 
-  // Toujours 3 onglets
   const TABS = [{id:"ingredients",label:"INGRÉDIENTS"},{id:"steps",label:"PRÉPARATION"},{id:"shopping",label:"COURSES"}];
   const tabIdx = TABS.findIndex(t=>t.id===tab);
-  const ratio = servings/recipe.baseServings;
+  const ratio  = servings/recipe.baseServings;
 
   useEffect(()=>{
     requestAnimationFrame(()=>setVis(true));
@@ -297,30 +297,29 @@ function Sheet({ recipe, onClose }) {
 
   const close=useCallback(()=>{setVis(false);setTimeout(onClose,340);},[onClose]);
 
-  // Touch sur le scroll intérieur — expand au scroll up, dismiss au scroll down depuis le haut
+  // ── drag handlers ──
   const onTS=(e)=>{
-    startY.current=e.touches[0].clientY;
-    startST.current=innerRef.current?.scrollTop||0;
+    dragY.current      = e.touches[0].clientY;
+    dragStartST.current= innerRef.current?.scrollTop||0;
   };
   const onTM=(e)=>{
-    const dy=e.touches[0].clientY-startY.current;
-    if(startST.current===0&&dy>0&&!expanded){
-      // tire vers le bas depuis le haut non-expandé → dismiss
-      if(dy>0) setTy(dy);
-    }
+    if(dragY.current===null) return;
+    // seulement si on est en haut du scroll
+    if(dragStartST.current>2){ dragY.current=null; return; }
+    const dy=e.touches[0].clientY-dragY.current;
+    if(dy>0) setTy(Math.min(dy,300)); // drag vers le bas
   };
   const onTE=(e)=>{
-    const dy=e.changedTouches[0].clientY-startY.current;
-    if(startST.current===0){
-      if(dy<-40) { setExpanded(true); setTy(0); }       // swipe up → expand
-      else if(dy>160&&!expanded) { close(); return; }    // swipe down depuis haut → close
-      else if(dy>100&&expanded&&(innerRef.current?.scrollTop||0)===0) { setExpanded(false); setTy(0); } // swipe down depuis expanded → réduire
-      else setTy(0);
-    } else { setTy(0); }
-    startY.current=null;
+    if(dragY.current===null) return;
+    const dy=e.changedTouches[0].clientY-dragY.current;
+    setTy(0);
+    if(dy<-60)       setSnap(1);          // swipe haut fort → plein écran
+    else if(dy>120 && snap===1) setSnap(0); // swipe bas fort depuis plein → mi
+    else if(dy>120 && snap===0) close();    // swipe bas fort depuis mi → ferme
+    dragY.current=null;
   };
 
-  // Swipe horizontal pour les onglets
+  // ── tab swipe ──
   const onTabTS=(e)=>{ tabSwipeX.current=e.touches[0].clientX; tabSwipeY.current=e.touches[0].clientY; };
   const onTabTE=(e)=>{
     if(tabSwipeX.current===null) return;
@@ -338,68 +337,70 @@ function Sheet({ recipe, onClose }) {
     return ing.unit?d+" "+ing.unit:String(d);
   };
 
-  // Hauteur : 55vh par défaut, 100% quand expanded
-  const sheetH = expanded ? "100%" : "58vh";
+  const height = snap===1 ? "100dvh" : "58vh";
+  const radius = snap===1 ? 0 : 16;
+  const translateY = vis ? ty : "100%";
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
-      <div onClick={close} style={{position:"absolute",inset:0,background:"rgba(15,15,15,0.25)",opacity:vis?1:0,transition:"opacity 0.3s",backdropFilter:"blur(3px)"}}/>
+    <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end",pointerEvents:"none"}}>
+      {/* backdrop */}
+      <div onClick={close}
+        style={{position:"absolute",inset:0,background:"rgba(15,15,15,0.25)",opacity:vis&&ty===0?1:Math.max(0,1-ty/300),transition:ty>0?"none":"opacity 0.3s",backdropFilter:"blur(3px)",pointerEvents:"auto"}}/>
 
+      {/* sheet */}
       <div
         onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}
         style={{
           position:"relative",zIndex:1,
           background:C.bg,
-          borderRadius:expanded?"0":"16px 16px 0 0",
-          height:sheetH,
+          borderRadius:radius+"px "+radius+"px 0 0",
+          height,
           display:"flex",flexDirection:"column",
-          transform:"translateY("+(vis?ty:100)+"%)",
-          transition:ty>0?"none":"transform 0.4s cubic-bezier(.32,0,.15,1), height 0.4s cubic-bezier(.32,0,.15,1), border-radius 0.4s",
+          transform:typeof translateY==="string"?"translateY("+translateY+")":"translateY("+translateY+"px)",
+          transition:ty>0?"none":"transform 0.42s cubic-bezier(.32,0,.15,1), height 0.42s cubic-bezier(.32,0,.15,1), border-radius 0.42s",
+          pointerEvents:"auto",
+          willChange:"transform",
         }}>
 
-        {/* handle + header */}
-        <div style={{flexShrink:0,borderBottom:"1px solid "+C.light}}>
-          {/* handle */}
-          <div style={{padding:"10px 0 0",display:"flex",justifyContent:"center"}}>
-            <div style={{width:32,height:3,borderRadius:2,background:C.light}}/>
-          </div>
-          {/* title row */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 12px"}}>
-            <div style={{fontFamily:C.font,fontSize:13,fontWeight:800,color:C.text,letterSpacing:-0.3,textTransform:"uppercase",whiteSpace:"pre-line",lineHeight:1}}>{recipe.title}</div>
-            <button onClick={close} style={{background:"none",border:"none",fontFamily:C.font,fontSize:9,color:C.muted,letterSpacing:2,cursor:"pointer",textTransform:"uppercase",flexShrink:0,marginLeft:12}}>FERMER</button>
-          </div>
+        {/* handle */}
+        <div style={{padding:"10px 0 0",display:"flex",justifyContent:"center",flexShrink:0}}>
+          <div style={{width:32,height:3,borderRadius:2,background:C.light}}/>
+        </div>
+
+        {/* title row */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px 12px",borderBottom:"1px solid "+C.light,flexShrink:0}}>
+          <div style={{fontFamily:C.font,fontSize:13,fontWeight:800,color:C.text,letterSpacing:-0.3,textTransform:"uppercase",lineHeight:1,whiteSpace:"pre-line"}}>{recipe.title}</div>
+          <button onClick={close} style={{background:"none",border:"none",fontFamily:C.font,fontSize:9,color:C.muted,letterSpacing:2,cursor:"pointer",textTransform:"uppercase",flexShrink:0,marginLeft:12}}>FERMER</button>
         </div>
 
         <div ref={innerRef} style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
 
-          {/* MACROS — product passport style, pleine largeur */}
+          {/* MACROS */}
           <div style={{display:"flex",borderBottom:"1px solid "+C.light}}>
             {[
-              {l:"PROT",v:recipe.macros.prot,u:"g"},
-              {l:"GLUC",v:recipe.macros.gluc,u:"g"},
-              {l:"LIP", v:recipe.macros.lip, u:"g"},
-              {l:"KCAL",v:recipe.macros.kcal,u:""},
+              {l:"PROTÉINES",v:recipe.macros.prot,u:"g"},
+              {l:"GLUCIDES", v:recipe.macros.gluc,u:"g"},
+              {l:"LIPIDES",  v:recipe.macros.lip, u:"g"},
+              {l:"CALORIES", v:recipe.macros.kcal,u:""},
             ].map((m,i)=>(
-              <div key={m.l} style={{flex:1,borderLeft:i>0?"1px solid "+C.light:"none",padding:"12px 0 10px 14px"}}>
+              <div key={m.l} style={{width:"25%",borderRight:i<3?"1px solid "+C.light:"none",padding:"12px 0 10px 14px",boxSizing:"border-box"}}>
                 <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>{m.l}</div>
                 <div style={{fontFamily:C.mono,fontSize:18,color:i===0?C.text:C.mid,lineHeight:1}}>{m.v}<span style={{fontFamily:C.font,fontSize:9,color:C.muted,marginLeft:1}}>{m.u}</span></div>
               </div>
             ))}
           </div>
 
-          {/* PORTIONS — passport style, filets */}
-          <div style={{display:"flex",borderBottom:"1px solid "+C.light}}>
-            <div style={{flex:1,padding:"12px 0 10px 14px"}}>
-              <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>PORTIONS</div>
+          {/* PORTIONS — label 62.5% | − 12.5% | valeur 12.5% | + 12.5% */}
+          <div style={{display:"flex",borderBottom:"1px solid "+C.light,height:56,overflow:"hidden"}}>
+            <div style={{width:"62.5%",borderRight:"1px solid "+C.light,display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 0 0 14px",boxSizing:"border-box",flexShrink:0}}>
+              <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>PORTIONS</div>
               <div style={{fontFamily:C.font,fontSize:9,color:C.muted}}>Ajuste les quantités</div>
             </div>
-            <div style={{display:"flex",alignItems:"center",borderLeft:"1px solid "+C.light}}>
-              <button onClick={()=>setServings(s=>Math.max(1,s-1))}
-                style={{width:44,height:"100%",border:"none",borderRight:"1px solid "+C.light,background:"none",fontFamily:C.mono,fontSize:18,color:C.text,cursor:"pointer"}}>−</button>
-              <div style={{width:44,height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:16,fontWeight:600,color:C.text,borderRight:"1px solid "+C.light}}>{servings}</div>
-              <button onClick={()=>setServings(s=>Math.min(12,s+1))}
-                style={{width:44,height:"100%",border:"none",background:"none",fontFamily:C.mono,fontSize:18,color:C.text,cursor:"pointer"}}>+</button>
-            </div>
+            <div onClick={()=>setServings(s=>Math.max(1,s-1))}
+              style={{width:"12.5%",borderRight:"1px solid "+C.light,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:20,color:C.text,cursor:"pointer",userSelect:"none",boxSizing:"border-box",flexShrink:0}}>−</div>
+            <div style={{width:"12.5%",borderRight:"1px solid "+C.light,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:16,fontWeight:600,color:C.text,boxSizing:"border-box",flexShrink:0}}>{servings}</div>
+            <div onClick={()=>setServings(s=>Math.min(12,s+1))}
+              style={{width:"12.5%",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:C.mono,fontSize:20,color:C.text,cursor:"pointer",userSelect:"none",boxSizing:"border-box",flexShrink:0}}>+</div>
           </div>
 
           {/* COÛT */}
@@ -408,19 +409,19 @@ function Sheet({ recipe, onClose }) {
             <div style={{fontFamily:C.mono,fontSize:16,color:C.text}}>{"~"+recipe.costPerServing.toFixed(2)+" €"}</div>
           </div>
 
-          {/* TABS — underline sliding */}
+          {/* TABS */}
           <div onTouchStart={onTabTS} onTouchEnd={onTabTE}>
             <div style={{position:"relative",display:"flex",borderBottom:"1px solid "+C.light}}>
               <div style={{position:"absolute",bottom:-1,left:0,height:2,background:C.dark,width:"33.333%",transform:"translateX(calc("+tabIdx+" * 100%))",transition:"transform 0.28s cubic-bezier(.4,0,.2,1)"}}/>
-              {TABS.map(t=>(
+              {TABS.map((t,i)=>(
                 <button key={t.id} onClick={()=>setTab(t.id)}
-                  style={{flex:1,padding:"12px 0",border:"none",background:"none",fontFamily:C.font,fontSize:8,fontWeight:700,color:tab===t.id?C.text:C.muted,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",transition:"color 0.2s",borderLeft:TABS.indexOf(t)>0?"1px solid "+C.light:"none"}}>
+                  style={{flex:1,padding:"11px 0",border:"none",borderLeft:i>0?"1px solid "+C.light:"none",background:"none",fontFamily:C.font,fontSize:8,fontWeight:700,color:tab===t.id?C.text:C.muted,cursor:"pointer",letterSpacing:2,textTransform:"uppercase",transition:"color 0.2s"}}>
                   {t.label}
                 </button>
               ))}
             </div>
 
-            {/* SLIDING PANELS — pleine largeur, zéro padding */}
+            {/* SLIDING PANELS */}
             <div style={{overflow:"hidden"}}>
               <div style={{display:"flex",width:"300%",transform:"translateX(calc(-"+(tabIdx*(100/3))+"%))",transition:"transform 0.3s cubic-bezier(.4,0,.2,1)"}}>
 
@@ -434,9 +435,12 @@ function Sheet({ recipe, onClose }) {
                   ))}
                 </div>
 
-                {/* PRÉPARATION — toujours les étapes */}
+                {/* PRÉPARATION */}
                 <div style={{width:"33.333%",flexShrink:0}}>
-                  {(recipe.steps||[]).map((step,i)=>(
+                  {(recipe.steps&&recipe.steps.length>0
+                    ? recipe.steps
+                    : [{title:"PRÉPARATION",content:recipe.assemblyNote||""}]
+                  ).map((step,i)=>(
                     <div key={i} style={{display:"flex",borderBottom:"1px solid "+C.light}}>
                       <div style={{width:44,flexShrink:0,borderRight:"1px solid "+C.light,display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:14}}>
                         <span style={{fontFamily:C.mono,fontSize:10,color:C.muted}}>{i<9?"0"+(i+1):i+1}</span>
@@ -447,12 +451,6 @@ function Sheet({ recipe, onClose }) {
                       </div>
                     </div>
                   ))}
-                  {/* Pour les recettes assembly, afficher les étapes de l'assemblyNote */}
-                  {(!recipe.steps||recipe.steps.length===0)&&recipe.assemblyNote&&(
-                    <div style={{padding:"16px 20px"}}>
-                      <div style={{fontFamily:C.font,fontSize:13,color:C.mid,lineHeight:1.7}}>{recipe.assemblyNote}</div>
-                    </div>
-                  )}
                 </div>
 
                 {/* COURSES */}
@@ -516,16 +514,14 @@ function GenModal({ onClose, onAdd }) {
 function RecipeCard({ r, onClick, i }) {
   return (
     <div onClick={()=>onClick(r)}
-      style={{background:C.card,borderRadius:0,overflow:"hidden",cursor:"pointer",borderTop:"1px solid "+C.light,borderBottom:"1px solid "+C.light,animationName:"up",animationDuration:"0.35s",animationDelay:(i*0.05)+"s",animationFillMode:"both",WebkitTapHighlightColor:"transparent"}}>
+      style={{background:"transparent",borderRadius:0,overflow:"hidden",cursor:"pointer",borderTop:"1px solid "+C.light,borderBottom:"1px solid "+C.light,animationName:"up",animationDuration:"0.35s",animationDelay:(i*0.05)+"s",animationFillMode:"both",WebkitTapHighlightColor:"transparent"}}>
 
       {/* main area — image left, title right */}
-      <div style={{display:"flex",gap:0,borderBottom:"1px solid "+C.light}}>
-        {/* image zone — same width as one macro cell (25%) */}
-        <div style={{width:"25%",flexShrink:0,background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:54,borderRight:"1px solid "+C.light,padding:"20px 0"}}>
+      <div style={{display:"flex",borderBottom:"1px solid "+C.light}}>
+        <div style={{width:"25%",flexShrink:0,background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:54,borderRight:"1px solid "+C.light,padding:"20px 0",boxSizing:"border-box"}}>
           {r.image}
         </div>
-        {/* title + desc */}
-        <div style={{flex:1,padding:"16px 16px 14px"}}>
+        <div style={{width:"75%",padding:"16px 16px 14px",boxSizing:"border-box"}}>
           {r.type==="assembly"&&(
             <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>RAPIDE</div>
           )}
@@ -535,7 +531,7 @@ function RecipeCard({ r, onClick, i }) {
         </div>
       </div>
 
-      {/* macros strip — 4 cells with labels above values like passport fields */}
+      {/* macros strip */}
       <div style={{display:"flex",borderBottom:"1px solid "+C.light}}>
         {[
           {label:"PROTÉINES", value:r.macros.prot, unit:"g"},
@@ -543,7 +539,7 @@ function RecipeCard({ r, onClick, i }) {
           {label:"LIPIDES",   value:r.macros.lip,  unit:"g"},
           {label:"CALORIES",  value:r.macros.kcal, unit:"kcal"},
         ].map((m,i)=>(
-          <div key={m.label} style={{flex:1,padding:"10px 0 10px 12px",borderLeft:i>0?"1px solid "+C.light:"none"}}>
+          <div key={m.label} style={{width:"25%",padding:"10px 0 10px 12px",borderRight:i<3?"1px solid "+C.light:"none",boxSizing:"border-box"}}>
             <div style={{fontFamily:C.font,fontSize:7,fontWeight:600,color:C.muted,letterSpacing:1.5,textTransform:"uppercase",marginBottom:3}}>{m.label}</div>
             <div style={{fontFamily:C.mono,fontSize:16,fontWeight:500,color:i===0?C.text:C.mid,lineHeight:1}}>{m.value}<span style={{fontFamily:C.font,fontSize:8,color:C.muted,marginLeft:1}}>{m.unit}</span></div>
           </div>
